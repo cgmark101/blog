@@ -1,5 +1,5 @@
 title: Deta + Static Blog 
-date: 2020-01-27
+date: 2021-01-27
 descr: Awesome blog hosted on deta
 tags: [general, awesome, blog]
 

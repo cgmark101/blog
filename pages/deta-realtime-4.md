@@ -1,5 +1,5 @@
 title: Deta + RealTime Tracking - Part 4
-date: 2020-02-11
+date: 2021-02-11
 descr: Realtime position Tracking using deta and micros
 tags: [awesome, realtime, geoposition]
 

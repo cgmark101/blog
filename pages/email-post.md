@@ -4,7 +4,7 @@ descr: Easy POST action form using FastAPI and Deta
 tags: [awesome, post, fastapi, deta, form, contact]
 
 
-In this article i bring to you a very easy way to add dynamic contact forms to your site or html templates without "complicated" stuff like php or javascript, using FastAPI and storing the form in a database, in this case DetaBase is the chosen one.
+In this article i bring to you a very easy way to handle forms in your site or html templates (a.k.a static site) without "complicated" stuff like php or javascript by using FastAPI with micros and storing the form in a database, in this case DetaBase is the chosen one.
 
 ## Setup
 For our setup, is always recomended a virtualenv. Type in terminal
@@ -216,8 +216,11 @@ async def email(
 
 Change `url='/'` to redirect wherever you want, may be your own domain.
 
+BTW go to [Akane contact form](https://akane.ga/contact/) and drop me a message, this contact form is handled with tutorial and redirect to "/"
+
 For the final words, you can go fansy and implement a email notification system to let you know when someone has used the contact form (`Hint`: SMTPlib :D)
 
+* [Source code](https://github.com/cgmark101/serverless-form-email)
 
 
 For further read, take a look at.

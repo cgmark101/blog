@@ -37,6 +37,10 @@ def index(num = 0):
 
     return render_template("index.html",num=num,pages=ppaginate.get_number_pages(num),config=app.config,current_number=num,total_num=ppaginate.get_total_number()- 1)
 
+@app.route("/404.html")
+def error():
+    return render_template("404.html")
+
 @app.route("/index/<string:num>.html")
 def index_extend(num):
     num=int(num)

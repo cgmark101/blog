@@ -1,0 +1,200 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+
+<head>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KNV3XXYVFR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-KNV3XXYVFR');
+</script>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deta + Static Blog - Akane</title>
+<meta name="description" content="Akane blog">
+<!-- CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<link rel=stylesheet type=text/css href="/static/css/milligram.css" />
+<link rel="stylesheet" href="/pygments.css">
+<link rel=stylesheet type=text/css href="/static/css/style.css" />
+<link rel="shortcut icon" href="/static/img/favico.svg">
+</head>
+
+<body>
+
+<!-- Wrapper -->
+
+<div id="wrapper">
+
+<!-- Header -->
+<section id="header">
+  <header>
+    <a itemprop="url" href="/">
+      <img itemprop="logo" src="/static/img/akane.logo.svg" alt="Dummy logotype" />
+    </a>
+  </header>
+  <nav id="nav">
+    <input type="checkbox" id="menutoggle">
+    <label for="menutoggle" class="labeltoggle">&#9776; Menu</label>
+    <ul>
+      <li><a href="/">Blog</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+  </nav>
+</section>
+
+<main>
+
+
+<section class="content">
+  <header>
+    <h2>Deta + Static Blog</h2>
+    
+    <p>Awesome blog hosted on deta</p>
+    
+    
+  </header>
+
+  <article>
+  <p>In this blog post we are going to learn how to host a pseudo static/dynamic blog. The blog itself is from another developer who has a tutorial on how to make it, but for the sake of speed we are going to clone the repo and adapt it</p>
+<p>This instruction are for linux only, but can be made in any os easily.</p>
+<p>Make a folder wherever you want, open the terminal inside it and type</p>
+<div class="codehilite"><pre><span></span><code>git clone https://github.com/insomnux/flaskblog.git
+<span class="nb">cd</span> flaskblog
+mv app.py main.py
+</code></pre></div>
+
+<p>If you want to follow the complete tutorial instead, go to
+<a href="https://nicolas.perriault.net/code/2012/dead-easy-yet-powerful-static-website-generator-with-flask/" title="Author blog">flaskblog author post</a></p>
+<h2>Now let's install Deta cli</h2>
+<div class="codehilite"><pre><span></span><code>curl -fsSL https://get.deta.dev/cli.sh <span class="p">|</span> sh
+</code></pre></div>
+
+<p>check if deta cli installed sucesfully</p>
+<div class="codehilite"><pre><span></span><code>deta --help
+</code></pre></div>
+
+<p>If you get error you must add the cli to your path</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PATH</span><span class="s2">:/home/&lt;user&gt;/.deta/bin&quot;</span>
+</code></pre></div>
+
+<p>Check again </p>
+<div class="codehilite"><pre><span></span><code>deta --help
+
+Usage:
+  deta <span class="o">[</span>flags<span class="o">]</span>
+  deta <span class="o">[</span>command<span class="o">]</span>
+
+Available Commands:
+  auth        Change auth settings <span class="k">for</span> a deta micro
+  clone       Clone a deta micro
+  cron        Change cron settings <span class="k">for</span> a deta micro
+  deploy      Deploy a deta micro
+  details     Details about a deta micro
+  <span class="nb">help</span>        Help about any <span class="nb">command</span>
+  login       Login to deta
+  new         Create a new deta micro
+  projects    List deta projects
+  pull        Pull the lastest deployed code of a deta micro
+  run         Run a deta micro
+  update      Update a deta micro
+  version     Print deta version
+  visor       Change visor settings <span class="k">for</span> a deta micro
+  watch       Deploy changes <span class="k">in</span> real <span class="nb">time</span>
+
+Flags:
+  -h, --help   <span class="nb">help</span> <span class="k">for</span> deta
+
+Use <span class="s2">&quot;deta [command] --help&quot;</span> <span class="k">for</span> more information about a command.
+</code></pre></div>
+
+<h3>We are set</h3>
+<p>In terminal type</p>
+<div class="codehilite"><pre><span></span><code>deta --login
+</code></pre></div>
+
+<p>Once logged in type</p>
+<div class="codehilite"><pre><span></span><code>deta new
+</code></pre></div>
+
+<p>And finaly </p>
+<div class="codehilite"><pre><span></span><code>deta deploy
+</code></pre></div>
+
+<p><code>Pro tip</code> Make sure you type those commands inside the project folder</p>
+<p>Now go to <a href="https://web.deta.sh" title="deta">web.deta.sh</a>, in micros tab, and look for the project, there is a link for your brand new blog</p>
+<h3>Local develop</h3>
+<p>For ease on the customization, you should make changes locally</p>
+<p>Lets create a virtual environment, activated and install dependencies</p>
+<div class="codehilite"><pre><span></span><code>virtualenv env
+. env/bin/activate
+pip install -r requirments.txt
+</code></pre></div>
+
+<p>Finally run the server locally</p>
+<div class="codehilite"><pre><span></span><code>python main.py
+</code></pre></div>
+
+<p><code>Pro tip</code> Do not make the virtualenv inside de root folder of your project, thats because the virtualenv will be uploaded to the micros.</p>
+<p>So here is a example of how i do it</p>
+<div class="codehilite"><pre><span></span><code>mkdir dev <span class="o">&amp;&amp;</span> <span class="nb">cd</span> dev
+virtualenv env
+. env/bin/activate
+git clone clone https://github.com/insomnux/flaskblog.git
+<span class="nb">cd</span> flaskblog
+pip install -r requirments.txt
+mv app.py main.py
+deta new
+deta deploy
+python main.py
+</code></pre></div>
+
+<h4>Cheers</h4>
+<p>Refer to <a href="https://docs.deta.sh/docs/home" title="Deta docs">deta docs</a> for more information</p>
+<p><code>BTW</code> this blog is made with de flaskblog and deta micros</p>
+  </article>
+
+  <footer>
+    <div class="taglist">
+      <span class="icon fa-clock-o">&nbsp</span> 2021-01-27
+      
+        <span>|&nbsp</span>
+        
+        <span>&num;<a href="/tag/general/">general</a></span>
+        
+        <span>&num;<a href="/tag/awesome/">awesome</a></span>
+        
+        <span>&num;<a href="/tag/blog/">blog</a></span>
+        
+        </span>
+      
+    </div>
+  </footer>
+</section>
+
+
+</main>
+
+<!-- Footer -->
+<footer>
+  <ul class="icons">
+    <li><a href="https://twitter.com/cgversotic" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
+    <li><a href="https://github.com/cgmark101" class="icon fa-github"><span class="label">Github</span></a></li>
+    <li><a href="mailto:cgmark101@gmail.com" class="icon fa-envelope"><span class="label">Email</span></a></li>
+</footer>
+
+</div><!-- ./#wrapper -->
+
+<!-- Copyright -->
+<div id="copyright">
+  &copy 2021 Akane.
+</div>
+
+<!-- JS -->
+</body>

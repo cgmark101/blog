@@ -79,6 +79,8 @@ $ uvicorn main:app --reload
 ```
 Go to [127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) and test the thing we just made in the interactive docs, if everything went good, go to [web.deta.sh](https://web.deta.sh) open Bases tab and look for the `contact` database, there should be the post entries.
 
+![alt text](/static/img/base1.jpg "base")
+
 ## Deploy to DetaMicros
 
 In terminal type

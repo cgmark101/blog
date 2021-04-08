@@ -218,7 +218,7 @@ async def email(
 
 Change `url='/'` to redirect wherever you want, may be your own domain.
 
-BTW go to [Akane contact form](https://akane.ga/contact/) and drop me a message, this contact form is handled with tutorial and redirect to "/"
+BTW go to [Akane contact form](https://akane.ga/contact/) and drop me a message, this contact form is handled with this tutorial and redirect to "/"
 
 For the final words, you can go fansy and implement a email notification system to let you know when someone has used the contact form (`Hint`: SMTPlib :D)
 

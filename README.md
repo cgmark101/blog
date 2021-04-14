@@ -1,6 +1,6 @@
 # Akane-Blog
 
-This is the source code for a blog made with flask and use a markdown pattern for the blog posts, can be dynamically generated of statically build using froze-flask
+This is the source code for a blog, made with flask and use a markdown pattern for the blog posts, can be dynamically generated of statically build using froze-flask
 
 Go to [Akane.ga](https://akane.ga/articles/deta-blog/) for more info
 

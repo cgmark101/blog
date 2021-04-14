@@ -8,4 +8,4 @@ This blog use a custom contact form backend and database hosted on [Deta](https:
 
 ![akane.ga](https://cdn.jsdelivr.net/gh/cgmark101/CDN-stuff@main/dist/img/akane.ga.jpg)
 
-<p style="text-align:center; border:1px solid black"><img src="https://cdn.jsdelivr.net/gh/cgmark101/CDN-stuff@main/dist/img/akane.ga_(iPad).jpg" alt="akane.ga_mobile" width="500"/></p>
+<img src="https://cdn.jsdelivr.net/gh/cgmark101/CDN-stuff@main/dist/img/akane.ga_(iPad).jpg" alt="akane.ga_mobile" width="500"/>

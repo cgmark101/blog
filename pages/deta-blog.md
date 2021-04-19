@@ -130,3 +130,5 @@ Refer to [deta docs](https://docs.deta.sh/docs/home "Deta docs") for more inform
 
 `BTW` this blog is made with de flaskblog and deta micros
 
+* [This Blog Source Code :D](https://github.com/cgmark101/blog "akane")
+

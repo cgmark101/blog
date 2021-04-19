@@ -1,4 +1,4 @@
-title: POST Action Form Snippet 
+title: Custom Serverless Contact Form 
 date: 2021-03-12
 descr: Easy POST action form using FastAPI and Deta
 tags: [awesome, post, fastapi, deta, form, contact]

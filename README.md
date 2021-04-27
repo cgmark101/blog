@@ -24,6 +24,8 @@ $ python freeze.py
 
 The static files are in the `build` folder
 
+Add blog posts/articles in markdown sintax inside the pages folder and your done.
+
 <p align="center">
     <a href="https://akane.ga" target="_blank"><img
             src="https://cdn.jsdelivr.net/gh/cgmark101/CDN-stuff@main/dist/img/akane.ga.jpg" alt="akane.ga"

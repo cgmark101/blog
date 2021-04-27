@@ -8,6 +8,22 @@ Go to [Akane.ga](https://akane.ga/articles/deta-blog/) for more info
 This blog use a custom contact form backend and database hosted on [Deta](https://web.deta.sh) check the
 [serverless-form-email](https://github.com/cgmark101/serverless-form-email) for more details
 
+## How to use this:
+```bash
+$ git clone https://github.com/cgmark101/blog.git
+$ cd blog
+$ virtualenv .venv
+$ pip install -r requirements.txt
+$ python main.py
+```
+
+For optimized build:
+```bash
+$ python freeze.py
+``` 
+
+The static files are in the `build` folder
+
 <p align="center">
     <a href="https://akane.ga" target="_blank"><img
             src="https://cdn.jsdelivr.net/gh/cgmark101/CDN-stuff@main/dist/img/akane.ga.jpg" alt="akane.ga"

@@ -1,9 +1,9 @@
 # Akane-Blog
 
-This is the source code for a blog, made with flask, it use a markdown pattern for the blog posts, can be dynamically
+This is the source code for a rudimentary `custom static site generator`, made with flask, it use a markdown pattern for the blog posts, can be dynamically
 generated or statically build using frozen-flask
 
-Go to [Akane.ga](https://akane.ga/articles/deta-blog/) for more info
+Go to the [Demo](https://dazzling-thompson-b46540.netlify.app/) for more info
 
 This blog use a custom contact form backend and database hosted on [Deta](https://web.deta.sh) check the
 [serverless-form-email](https://github.com/cgmark101/serverless-form-email) for more details

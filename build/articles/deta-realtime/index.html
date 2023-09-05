@@ -1,0 +1,167 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deta + RealTime Tracking - Part 1 - Akane</title>
+<meta name="description" content="Akane blog">
+<!-- CSS -->
+<link rel=stylesheet type=text/css href="/static/css/milligram.css" />
+<link rel="stylesheet" href="/pygments.css">
+<link rel=stylesheet type=text/css href="/static/css/style.css" />
+<link rel="shortcut icon" href="/static/img/favico.svg">
+</head>
+
+<body>
+
+<!-- Wrapper -->
+
+<div id="wrapper">
+
+<!-- Header -->
+<section id="header">
+  <header>
+    <a itemprop="url" href="/">
+      <img itemprop="logo" src="/static/img/akane.logo.svg" alt="Dummy logotype" width="150" height="150"/>
+    </a>
+  </header>
+  <nav id="nav">
+    <input type="checkbox" id="menutoggle">
+    <label for="menutoggle" class="labeltoggle">&#9776; Menu</label>
+    <ul>
+      <li><a href="/">Blog</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+  </nav>
+</section>
+
+<main>
+
+
+<section class="content">
+  <header>
+    <h2>Deta + RealTime Tracking - Part 1</h2>
+    
+    <p>Realtime position Tracking using deta and micros</p>
+    
+    
+  </header>
+
+  <article>
+  <p>In this serie of articles we are going to make a micro service in python for realtime location tracking and display the info in a web browser, using cool tecnologies like MQTT, OwnTracks, detaBase, detaMicros, FastAPI and MapBox.</p>
+<p>First let's talk about the comunication protocol and move to the other tools. </p>
+<p><code>MQTT</code>: mqtt stands for Message Queuing Telemetry Transport. is an open and lightweight, publish-subscribe network protocol that transports messages between devices, it is designed for connections with remote locations where a "small code footprint" is required or the network bandwidth is limited. In short, is a thin, fast, low network bandwidth hunger protocol.</p>
+<p><code>OwnTracks</code>: this app allows you to keep track of your own location and will send the gps coordenates and others data of your smartphone to de database, is open source and support MQTT and HTTP protocols.</p>
+<p><code>DetaBase</code>: Deta Base is a fully-managed, fast, scalable and secure NoSQL database with a focus on end user simplicity. Is great for projects where configuring and maintaining a database is overkill.</p>
+<p><code>DetaMicros</code>: Are a simple yet powerful environment for running code in the cloud. Micros are both highly performant and scalable, while coming with an HTTP endpoint and authentication out of the box</p>
+<p><code>FastAPI</code>: Is a modern, fast (high-performance), web framework for building APIs with Python 3.6+ based on standard Python type hints.</p>
+<p><code>Mapbox</code>: more specific MapboxGL is a JavaScript library for vector maps on the Web. Its performance, real-time styling, and interactivity features set the bar for anyone building fast, immersive maps on the web.</p>
+<p>Let's begin...</p>
+<h2>Mosquitto</h2>
+<p>Mosquitto is a open source implementation for the MQTT protocol, can act as broker/server and client, we have 2 ways to go from here, self hosted or cloud base. To avoid the hassle of the mosquitto configuration for production, we are going to follow the cloud base option. There are plenty cloud based brokers in the wild, some free and some paid but mosquitto have a fully functional and free for testing cloud broker.</p>
+<h2>OwnTracks</h2>
+<p>First we are going to install owntracks app, availeble from app store and play store, than configure to connect to the mosquitto broker. Open the app, go to <code>preference-&gt;connection-&gt;mode</code> make sure it is selected mqtt, now select <code>host</code> and fill with.</p>
+<div class="codehilite"><pre><span></span><code>Host<span class="w"> </span>:<span class="w"> </span>test.mosquitto.org
+Port:<span class="w"> </span><span class="m">1883</span>
+Client<span class="w"> </span>ID:<span class="w"> </span>wherever-id
+</code></pre></div>
+
+<p>In <code>identification</code> fill, device id and tracker id only.</p>
+<div class="codehilite"><pre><span></span><code>Username:<span class="w"> </span>blank
+Password:<span class="w"> </span>blank
+Device<span class="w"> </span>ID:<span class="w"> </span>GalaxyS5<span class="w"> </span><span class="o">(</span>or<span class="w"> </span>your<span class="w"> </span>phone<span class="w"> </span>model<span class="o">)</span>
+Tracker<span class="w"> </span>ID:<span class="w"> </span>s5
+</code></pre></div>
+
+<p>Now go to <code>preference-&gt;configuration managment-&gt;editor</code> and fill it with.</p>
+<div class="codehilite"><pre><span></span><code>key:
+pubTopicBase
+value:
+test/owntracks<span class="w"> </span>
+</code></pre></div>
+
+<p>And we are set with owntracks</p>
+<h1>MQTT client</h1>
+<p>To continue, we have to make a conecction with the broker via python client, so we can receive the data from owntracks and procces it, we will use the awosome library <code>paho mqtt</code> to create our own.</p>
+<div class="codehilite"><pre><span></span><code>mkdir<span class="w"> </span>mqtt-client<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>mqtt-client
+virtualenv<span class="w"> </span>-p<span class="w"> </span>python3<span class="w"> </span>env
+.<span class="w"> </span>env/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>paho-mqtt
+touch<span class="w"> </span>sub_client.py
+</code></pre></div>
+
+<p>Open sub_client.py with your favorite editor </p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">paho.mqtt.subscribe</span> <span class="k">as</span> <span class="nn">subscribe</span>
+
+<span class="k">def</span> <span class="nf">print_msg</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> : </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">topic</span><span class="p">,</span> <span class="n">message</span><span class="o">.</span><span class="n">payload</span><span class="p">))</span>
+
+<span class="n">subscribe</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">print_msg</span><span class="p">,</span> <span class="s2">&quot;test/owntracks&quot;</span><span class="p">,</span> <span class="n">hostname</span><span class="o">=</span><span class="s2">&quot;test.mosquitto.org&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Run the client with.</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>sub_client.py
+</code></pre></div>
+
+<p>Go to owntracks app and press the 'upload' button (aside the gps icon) and if you see in your terminal something like this, your ready to go.</p>
+<div class="codehilite"><pre><span></span><code>test/owntracks<span class="w"> </span>:<span class="w"> </span>b<span class="s1">&#39;{&quot;_type&quot;:&quot;location&quot;,&quot;acc&quot;:33,&quot;alt&quot;:96,&quot;batt&quot;:100,&quot;bs&quot;:3,&quot;conn&quot;:&quot;w&quot;,&quot;created_at&quot;:1612018787,&quot;lat&quot;:8.2631493,&quot;lon&quot;:-62.7914148,&quot;t&quot;:&quot;u&quot;,&quot;tid&quot;:&quot;g4&quot;,&quot;tst&quot;:1612018557,&quot;vac&quot;:1,&quot;vel&quot;:5}&#39;</span>
+</code></pre></div>
+
+<p>In the next chapter we will use and extend the python client to receive the data, process it and upload to our database (deta Base) for further requests from the browser.</p>
+<p>For further read, take a look at.</p>
+<ul>
+<li><a href="https://pypi.org/project/paho-mqtt/">Paho MQTT libray</a></li>
+<li><a href="https://mosquitto.org/">Mosquitto</a></li>
+<li><a href="https://owntracks.org/">OwnTracks</a></li>
+<li><a href="https://www.mapbox.com/mapbox-gljs">Mapbox GL</a></li>
+<li><a href="https://deta.sh">Deta</a></li>
+<li><a href="https://fastapi.tiangolo.com/">FastAPI</a></li>
+</ul>
+  </article>
+
+  <footer>
+    <div class="taglist">
+      <span class="icon fa-clock-o">&nbsp</span> 2021-01-28
+      
+        <span>|&nbsp</span>
+        
+        <span>&num;<a href="/tag/awesome/">awesome</a></span>
+        
+        <span>&num;<a href="/tag/realtime/">realtime</a></span>
+        
+        <span>&num;<a href="/tag/geoposition/">geoposition</a></span>
+        
+        </span>
+      
+    </div>
+  </footer>
+</section>
+
+
+</main>
+
+<!-- Footer -->
+<footer>
+  <ul class="icons">
+    <li><a href="https://twitter.com/unx_dev" aria-label="Twitter" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
+    <li><a href="https://github.com/cgmark101" aria-label="Github" class="icon fa-github"><span class="label">Github</span></a></li>
+    <li><a href="https://instagram.com/cgmark01" aria-label="Instagram" class="icon fa-instagram"><span class="label">Twitter</span></a></li>
+    <li><a href="mailto:cgmark101@gmail.com" aria-label="Mail" class="icon fa-envelope"><span class="label">Email</span></a></li>
+</footer>
+
+</div><!-- ./#wrapper -->
+
+<!-- Copyright -->
+<div id="copyright">
+  &copy <span id="year"></span> Akane.
+</div>
+
+<!-- JS -->
+<script>document.getElementById("year").innerHTML = new Date().getFullYear();</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+</body>

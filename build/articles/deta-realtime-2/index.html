@@ -1,0 +1,296 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deta + RealTime Tracking - Part 2 - Akane</title>
+<meta name="description" content="Akane blog">
+<!-- CSS -->
+<link rel=stylesheet type=text/css href="/static/css/milligram.css" />
+<link rel="stylesheet" href="/pygments.css">
+<link rel=stylesheet type=text/css href="/static/css/style.css" />
+<link rel="shortcut icon" href="/static/img/favico.svg">
+</head>
+
+<body>
+
+<!-- Wrapper -->
+
+<div id="wrapper">
+
+<!-- Header -->
+<section id="header">
+  <header>
+    <a itemprop="url" href="/">
+      <img itemprop="logo" src="/static/img/akane.logo.svg" alt="Dummy logotype" width="150" height="150"/>
+    </a>
+  </header>
+  <nav id="nav">
+    <input type="checkbox" id="menutoggle">
+    <label for="menutoggle" class="labeltoggle">&#9776; Menu</label>
+    <ul>
+      <li><a href="/">Blog</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+  </nav>
+</section>
+
+<main>
+
+
+<section class="content">
+  <header>
+    <h2>Deta + RealTime Tracking - Part 2</h2>
+    
+    <p>Realtime position Tracking using deta and micros</p>
+    
+    
+  </header>
+
+  <article>
+  <p>If you follow the part 1 and succesfully got the data from owntracks to the python client, you are ready to continue whit this guide .</p>
+<p>Now is time for the fun part, your fully-managed, fast, scalable and secure NoSQL database with a focus on end user simplicity, is here. in this section we have to make our data persistent in some database and deta is perfect for this case.</p>
+<p>Go and grab an account at <a href="https://deta.sh">deta.sh</a>, loggin and go to <code>settings-&gt;create key</code>. You'll be prompt with <code>key name</code>, <code>key description</code> and <code>project key</code>, copy the <code>project key</code> and save it in a secure place</p>
+<p>The <code>sub_client.py</code> client is from the paho library examples, we will use a more sophisticated client from those examples as well.</p>
+<p>Open the <code>sub_client.pi</code> with your favorite editor, delete everithing and on top type.</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">paho.mqtt.client</span> <span class="k">as</span> <span class="nn">mqtt</span>
+<span class="kn">from</span> <span class="nn">deta</span> <span class="kn">import</span> <span class="n">Deta</span>
+<span class="kn">import</span> <span class="nn">json</span>
+</code></pre></div>
+
+<p>We have imported the necesary modules for the client to work, now lets add the <code>deta</code> configuration.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;project key&#39;</span>
+<span class="n">deta</span> <span class="o">=</span> <span class="n">Deta</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">deta</span><span class="o">.</span><span class="n">Base</span><span class="p">(</span><span class="s1">&#39;realtime&#39;</span><span class="p">)</span> <span class="c1"># data base name</span>
+</code></pre></div>
+
+<p>Paste the <code>project key</code> generated in deta.sh and the database name can be anything you want.</p>
+<p>Now lets make our brand new client.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">MQTT_HOST</span> <span class="o">=</span> <span class="s1">&#39;test.mosquitto.org&#39;</span>
+<span class="n">TOPIC</span> <span class="o">=</span> <span class="s1">&#39;test/owntracks&#39;</span>
+
+<span class="k">def</span> <span class="nf">on_connect</span><span class="p">(</span><span class="n">mqttc</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;rc: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rc</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="n">mqttc</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">topic</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">qos</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">payload</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">on_subscribe</span><span class="p">(</span><span class="n">mqttc</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">mid</span><span class="p">,</span> <span class="n">granted_qos</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Subscribed: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">mid</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">granted_qos</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">on_publish</span><span class="p">(</span><span class="n">mqttc</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">mid</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;mid: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">mid</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">on_log</span><span class="p">(</span><span class="n">mqttc</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+
+<span class="n">mqttc</span> <span class="o">=</span> <span class="n">mqtt</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">on_message</span> <span class="o">=</span> <span class="n">on_message</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">on_connect</span> <span class="o">=</span> <span class="n">on_connect</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">on_publish</span> <span class="o">=</span> <span class="n">on_publish</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">on_subscribe</span> <span class="o">=</span> <span class="n">on_subscribe</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">on_log</span> <span class="o">=</span> <span class="n">on_log</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">MQTT_HOST</span><span class="p">,</span> <span class="mi">1883</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">TOPIC</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="n">mqttc</span><span class="o">.</span><span class="n">loop_forever</span><span class="p">()</span>
+</code></pre></div>
+
+<p>Run the script.</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>sub_client.py
+</code></pre></div>
+
+<p>With this code, we have now more output for debug in the terminal, but keeping the important that is receiving the owntracks data.</p>
+<p>From this point, got to explain how the micro service will work. The <code>sub_client.py</code> connects to the broker hosted on <code>test.mosquitto.org</code>, susbcribe to the selected topic, in this case <code>test/owntracks</code>, receive the payload from the owntracks app and write that to the <code>detaBase</code>, than make a REST api endpoint of the payload for further read from the webapp client. </p>
+<p>Owntracks gives us some nice data including latitude, longitude, altitude, velocity, device battery and others in json format, we could save all the payloads in the database for further analysis but we only need realtime tracking, in simple words, we only need the last point to update the location, to achieve this, detaBase have some methods to read/write on the database. We will take the payload and update it all the time, so only one entry in the database will be there, nothing more nothing less</p>
+<p>For the update method to work, there must be a database and a entry, but rigth now is empty. Let's make some prep work.</p>
+<p>In the project folder with the virtual enviroment activated open terminal and type.</p>
+<div class="codehilite"><pre><span></span><code>touch<span class="w"> </span>db.py
+pip<span class="w"> </span>install<span class="w"> </span>deta
+</code></pre></div>
+
+<p>Open db.py in your favorite editor </p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">deta</span> <span class="kn">import</span> <span class="n">Deta</span>
+
+<span class="n">KEY</span> <span class="o">=</span> <span class="s1">&#39;project key&#39;</span>
+<span class="n">BASE</span> <span class="o">=</span> <span class="s1">&#39;realtime&#39;</span> <span class="c1"># detaBase name</span>
+
+<span class="n">deta</span> <span class="o">=</span> <span class="n">Deta</span><span class="p">(</span><span class="n">KEY</span><span class="p">)</span> <span class="c1"># configure your Deta project</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">deta</span><span class="o">.</span><span class="n">Base</span><span class="p">(</span><span class="n">BASE</span><span class="p">)</span>  <span class="c1"># access your DB</span>
+
+<span class="n">payload</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">&quot;_type&quot;</span><span class="p">:</span> <span class="s2">&quot;location&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;acc&quot;</span><span class="p">:</span> <span class="mi">68</span><span class="p">,</span> 
+            <span class="s2">&quot;alt&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> 
+            <span class="s2">&quot;batt&quot;</span><span class="p">:</span> <span class="mi">78</span><span class="p">,</span> 
+            <span class="s2">&quot;bs&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> 
+            <span class="s2">&quot;conn&quot;</span><span class="p">:</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> 
+            <span class="s2">&quot;created_at&quot;</span><span class="p">:</span> <span class="mi">1611772063</span><span class="p">,</span> 
+            <span class="s2">&quot;lat&quot;</span><span class="p">:</span> <span class="mf">8.2631383</span><span class="p">,</span> 
+            <span class="s2">&quot;lon&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">62.7914465</span><span class="p">,</span> 
+            <span class="s2">&quot;t&quot;</span><span class="p">:</span> <span class="s2">&quot;u&quot;</span><span class="p">,</span> 
+            <span class="s2">&quot;tid&quot;</span><span class="p">:</span> <span class="s2">&quot;g4&quot;</span><span class="p">,</span> 
+            <span class="s2">&quot;tst&quot;</span><span class="p">:</span> <span class="mi">1611772057</span><span class="p">,</span> 
+            <span class="s2">&quot;vac&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> 
+            <span class="s2">&quot;vel&quot;</span><span class="p">:</span> <span class="mi">0</span>
+            <span class="p">}</span>
+
+<span class="n">a_list</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">fetch</span><span class="p">())</span>
+
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">a_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;detaBase is empty&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Inserting payload in database&#39;</span><span class="p">)</span>
+    <span class="n">id_gen</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Your key is: &#39;</span><span class="p">)</span>
+    <span class="n">b_list</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">fetch</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">items</span> <span class="ow">in</span> <span class="n">b_list</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="s1">&#39;key&#39;</span><span class="p">])</span>
+
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;detaBase is setup&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Your key is: &#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">items</span> <span class="ow">in</span> <span class="n">a_list</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="s1">&#39;key&#39;</span><span class="p">])</span>
+</code></pre></div>
+
+<p>The payload in the code above represent the data sent by owntracks, we harcode it in the data base for the initial setup. You can call it a pseudo migration :D</p>
+<p>Replace project key with your real <code>project key</code> generated in previous steps and run the script with.</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>db.py
+</code></pre></div>
+
+<p>You should see the output.</p>
+<div class="codehilite"><pre><span></span><code>detaBase<span class="w"> </span>is<span class="w"> </span>empty
+Inserting<span class="w"> </span>payload<span class="w"> </span><span class="k">in</span><span class="w"> </span>database
+Your<span class="w"> </span>key<span class="w"> </span>is:<span class="w"> </span>
+8vnujsnjq2fl<span class="w"> </span><span class="c1"># Yours will be something similar</span>
+</code></pre></div>
+
+<p>If you rerun the script the output will be.</p>
+<div class="codehilite"><pre><span></span><code>detaBase<span class="w"> </span>is<span class="w"> </span>setup
+Your<span class="w"> </span>key<span class="w"> </span>is:<span class="w"> </span>
+8vnujsnjq2fl<span class="w"> </span><span class="c1"># Should be the same from the above</span>
+</code></pre></div>
+
+<p>This key is the unique identifier of the entry in the database, is autogenerated by <code>deta</code>, we need it to update the entry everytime owntracks send the payload, if you go to <a href="https://web.deta.sh">web.deta.sh</a> in the bases tab, youll see the database named realtime with one entry, the entry is the payload we inserted plus the autogenerated key/id.
+<code>BTW</code> i went fancy in my project and custom generate the key/id with some nice <code>uuid</code> but thats optional.</p>
+<p>Ok, one more step to automate all this thing lets edit the <code>sub_client.pi</code> to receive the payload and update the database</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">paho.mqtt.client</span> <span class="k">as</span> <span class="nn">mqtt</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">deta</span> <span class="kn">import</span> <span class="n">Deta</span>
+
+<span class="n">KEY</span> <span class="o">=</span> <span class="s1">&#39;your key&#39;</span> <span class="c1">#Deta Key</span>
+<span class="n">BASE</span> <span class="o">=</span> <span class="s1">&#39;realtime&#39;</span> <span class="c1"># detaBase name</span>
+
+<span class="n">deta</span> <span class="o">=</span> <span class="n">Deta</span><span class="p">(</span><span class="n">KEY</span><span class="p">)</span> <span class="c1"># configure your Deta project</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">deta</span><span class="o">.</span><span class="n">Base</span><span class="p">(</span><span class="n">BASE</span><span class="p">)</span>  <span class="c1"># access your DB</span>
+
+<span class="n">BaseKey</span> <span class="o">=</span> <span class="s1">&#39;8vnujsnjq2fl&#39;</span> <span class="c1"># paste the detabase key generated by db.py</span>
+
+<span class="c1"># MQTT Host</span>
+<span class="n">MQTT_HOST</span> <span class="o">=</span> <span class="s1">&#39;test.mosquitto.org&#39;</span>
+
+<span class="c1"># Topic to subscribe</span>
+<span class="n">TOPIC</span> <span class="o">=</span> <span class="s1">&#39;test/owntracks&#39;</span>
+
+<span class="k">def</span> <span class="nf">on_connect</span><span class="p">(</span><span class="n">mqttc</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;rc: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rc</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="n">mqttc</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">topic</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">qos</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">payload</span><span class="p">))</span>
+    <span class="c1"># payload decode</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">payload</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># decoded payload to json </span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+        <span class="c1"># update the database</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">BaseKey</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;done&#39;</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;could not save the payload&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;check for database name or baseKey&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">on_publish</span><span class="p">(</span><span class="n">mqttc</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">mid</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;mid: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">mid</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">on_subscribe</span><span class="p">(</span><span class="n">mqttc</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">mid</span><span class="p">,</span> <span class="n">granted_qos</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Subscribed: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">mid</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">granted_qos</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">on_log</span><span class="p">(</span><span class="n">mqttc</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+
+
+<span class="n">mqttc</span> <span class="o">=</span> <span class="n">mqtt</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">on_message</span> <span class="o">=</span> <span class="n">on_message</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">on_connect</span> <span class="o">=</span> <span class="n">on_connect</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">on_publish</span> <span class="o">=</span> <span class="n">on_publish</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">on_subscribe</span> <span class="o">=</span> <span class="n">on_subscribe</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">on_log</span> <span class="o">=</span> <span class="n">on_log</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">MQTT_HOST</span><span class="p">,</span> <span class="mi">1883</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+<span class="n">mqttc</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">TOPIC</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="n">mqttc</span><span class="o">.</span><span class="n">loop_forever</span><span class="p">()</span>
+</code></pre></div>
+
+<p>The logic implemented inside the <code>on_message</code> function is because the payload received by the client is in bytes, we have to convert it to strings and than to json format, so that we can update the last entry point. Thats because the detaBase only accepts json format. In case of error, a mesage will be display in the terminal. Thats know as error handling :D</p>
+<p>Whit this done we can move to write our Rest API endpoint. But thats in the next chapter</p>
+<p>For further read, take a look at.</p>
+<ul>
+<li><a href="https://pypi.org/project/paho-mqtt/">Paho MQTT libray</a></li>
+<li><a href="https://mosquitto.org/">Mosquitto</a></li>
+<li><a href="https://owntracks.org/">OwnTracks</a></li>
+<li><a href="https://www.mapbox.com/mapbox-gljs">Mapbox GL</a></li>
+<li><a href="https://deta.sh">Deta</a></li>
+<li><a href="https://fastapi.tiangolo.com/">FastAPI</a></li>
+</ul>
+  </article>
+
+  <footer>
+    <div class="taglist">
+      <span class="icon fa-clock-o">&nbsp</span> 2021-01-29
+      
+        <span>|&nbsp</span>
+        
+        <span>&num;<a href="/tag/awesome/">awesome</a></span>
+        
+        <span>&num;<a href="/tag/realtime/">realtime</a></span>
+        
+        <span>&num;<a href="/tag/geoposition/">geoposition</a></span>
+        
+        </span>
+      
+    </div>
+  </footer>
+</section>
+
+
+</main>
+
+<!-- Footer -->
+<footer>
+  <ul class="icons">
+    <li><a href="https://twitter.com/unx_dev" aria-label="Twitter" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
+    <li><a href="https://github.com/cgmark101" aria-label="Github" class="icon fa-github"><span class="label">Github</span></a></li>
+    <li><a href="https://instagram.com/cgmark01" aria-label="Instagram" class="icon fa-instagram"><span class="label">Twitter</span></a></li>
+    <li><a href="mailto:cgmark101@gmail.com" aria-label="Mail" class="icon fa-envelope"><span class="label">Email</span></a></li>
+</footer>
+
+</div><!-- ./#wrapper -->
+
+<!-- Copyright -->
+<div id="copyright">
+  &copy <span id="year"></span> Akane.
+</div>
+
+<!-- JS -->
+<script>document.getElementById("year").innerHTML = new Date().getFullYear();</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+</body>

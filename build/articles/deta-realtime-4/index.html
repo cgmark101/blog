@@ -1,0 +1,237 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deta + RealTime Tracking - Part 4 - Akane</title>
+<meta name="description" content="Akane blog">
+<!-- CSS -->
+<link rel=stylesheet type=text/css href="/static/css/milligram.css" />
+<link rel="stylesheet" href="/pygments.css">
+<link rel=stylesheet type=text/css href="/static/css/style.css" />
+<link rel="shortcut icon" href="/static/img/favico.svg">
+</head>
+
+<body>
+
+<!-- Wrapper -->
+
+<div id="wrapper">
+
+<!-- Header -->
+<section id="header">
+  <header>
+    <a itemprop="url" href="/">
+      <img itemprop="logo" src="/static/img/akane.logo.svg" alt="Dummy logotype" width="150" height="150"/>
+    </a>
+  </header>
+  <nav id="nav">
+    <input type="checkbox" id="menutoggle">
+    <label for="menutoggle" class="labeltoggle">&#9776; Menu</label>
+    <ul>
+      <li><a href="/">Blog</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+  </nav>
+</section>
+
+<main>
+
+
+<section class="content">
+  <header>
+    <h2>Deta + RealTime Tracking - Part 4</h2>
+    
+    <p>Realtime position Tracking using deta and micros</p>
+    
+    
+  </header>
+
+  <article>
+  <p>For the last part of this serie, we have to implement a frontend for our service, this can be achieved in various ways but we are going to make a web app and use a javascript library called mapbox, but first we have to connect the back with front.</p>
+<p>Edit main.py to insert new modules and some mods.</p>
+<div class="codehilite"><pre><span></span><code>from<span class="w"> </span>fastapi<span class="w"> </span>import<span class="w"> </span>FastAPI,<span class="w"> </span>Request
+from<span class="w"> </span>fastapi.templating<span class="w"> </span>import<span class="w"> </span>Jinja2Templates
+from<span class="w"> </span>fastapi.responses<span class="w"> </span>import<span class="w"> </span>HTMLResponse
+from<span class="w"> </span>deta<span class="w"> </span>import<span class="w"> </span>Deta
+
+<span class="nv">KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;project key&#39;</span>
+<span class="nv">BASE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;realtime&#39;</span><span class="w"> </span><span class="c1"># detaBase name</span>
+
+<span class="nv">deta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>Deta<span class="o">(</span>KEY<span class="o">)</span><span class="w"> </span><span class="c1"># configure your Deta project</span>
+<span class="nv">db</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>deta.Base<span class="o">(</span>BASE<span class="o">)</span><span class="w">  </span><span class="c1"># access your DB</span>
+
+<span class="c1">#Templates Folder</span>
+<span class="nv">templates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>Jinja2Templates<span class="o">(</span><span class="nv">directory</span><span class="o">=</span><span class="s2">&quot;templates&quot;</span><span class="o">)</span>
+
+<span class="nv">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>FastAPI<span class="o">()</span>
+
+@app.get<span class="o">(</span><span class="s1">&#39;/&#39;</span><span class="o">)</span>
+async<span class="w"> </span>def<span class="w"> </span>hellow_world<span class="o">()</span>:
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">{</span><span class="s1">&#39;hola&#39;</span>:<span class="s1">&#39;mundo&#39;</span><span class="o">}</span>
+
+<span class="c1"># endpoint</span>
+@app.get<span class="o">(</span><span class="s1">&#39;/deta&#39;</span><span class="o">)</span>
+async<span class="w"> </span>def<span class="w"> </span>deta<span class="o">()</span>:
+<span class="w">    </span><span class="c1"># get database entry, return a list. </span>
+<span class="w">    </span><span class="c1"># in this case return a dictionary inside a list</span>
+<span class="w">    </span><span class="nv">resultado</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>next<span class="o">(</span>db.fetch<span class="o">())</span>
+
+<span class="w">    </span><span class="c1"># iterate for desired data inside the list</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span>item<span class="w"> </span><span class="k">in</span><span class="w"> </span>resultado:
+<span class="w">      </span><span class="nv">lat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>item<span class="o">[</span><span class="s1">&#39;lat&#39;</span><span class="o">]</span><span class="w"> </span><span class="c1"># latitude</span>
+<span class="w">      </span><span class="nv">lon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>item<span class="o">[</span><span class="s1">&#39;lon&#39;</span><span class="o">]</span><span class="w"> </span><span class="c1"># longitude</span>
+
+<span class="w">    </span><span class="c1"># data to be retrieved in the browser  </span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">{</span><span class="s2">&quot;geometry&quot;</span>:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;type&quot;</span>:<span class="w"> </span><span class="s2">&quot;Point&quot;</span>,<span class="w"> </span><span class="s2">&quot;coordinates&quot;</span>:<span class="w"> </span><span class="o">[</span>lon,<span class="w"> </span>lat<span class="o">]}</span>,<span class="w"> </span><span class="s2">&quot;type&quot;</span>:<span class="w"> </span><span class="s2">&quot;Feature&quot;</span>,<span class="w"> </span><span class="s2">&quot;properties&quot;</span>:<span class="w"> </span><span class="o">{}}</span>
+
+<span class="c1">#MapBox template</span>
+@app.get<span class="o">(</span><span class="s2">&quot;/map&quot;</span>,<span class="w"> </span><span class="nv">response_class</span><span class="o">=</span>HTMLResponse,<span class="w"> </span><span class="nv">include_in_schema</span><span class="o">=</span>False<span class="o">)</span>
+async<span class="w"> </span>def<span class="w"> </span>map<span class="o">(</span>request:<span class="w"> </span>Request<span class="o">)</span>:
+<span class="w">    </span><span class="k">return</span><span class="w"> </span>templates.TemplateResponse<span class="o">(</span><span class="s2">&quot;mbox.html&quot;</span>,<span class="o">{</span><span class="s2">&quot;request&quot;</span>:request<span class="o">})</span>
+</code></pre></div>
+
+<p>Now create a <code>templates</code> folder and inside create a html file called <code>mbox.html</code></p>
+<div class="codehilite"><pre><span></span><code><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">&quot;utf-8&quot;</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>Realtime deta<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;viewport&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;initial-scale=1,maximum-scale=1,user-scalable=no&quot;</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;https://api.mapbox.com/mapbox-gl-js/v2.0.1/mapbox-gl.js&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">link</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;https://api.mapbox.com/mapbox-gl-js/v2.0.1/mapbox-gl.css&quot;</span> <span class="na">rel</span><span class="o">=</span><span class="s">&quot;stylesheet&quot;</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">style</span><span class="p">&gt;</span>
+<span class="w">        </span><span class="nt">body</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">margin</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">            </span><span class="k">padding</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="p">#</span><span class="nn">map</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">position</span><span class="p">:</span><span class="w"> </span><span class="kc">absolute</span><span class="p">;</span>
+<span class="w">            </span><span class="k">top</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">            </span><span class="k">bottom</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">            </span><span class="k">width</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="kt">%</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">&lt;/</span><span class="nt">style</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;map&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="w">        </span><span class="nx">mapboxgl</span><span class="p">.</span><span class="nx">accessToken</span><span class="w"> </span><span class="o">=</span>
+<span class="w">            </span><span class="s1">&#39;pk.eyJ1IjoibWFyazYyNzI2IiwiYSI6ImNqc2k2M3gyZjBoZG40NGxwNmNoYjh0aHoifQ.0Tv0shaBZSZVxG1xbT9LLQ&#39;</span><span class="p">;</span>
+<span class="w">        </span><span class="kd">var</span><span class="w"> </span><span class="nx">map</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">mapboxgl</span><span class="p">.</span><span class="nb">Map</span><span class="p">({</span>
+<span class="w">            </span><span class="nx">container</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;map&#39;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">style</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;mapbox://styles/mapbox/streets-v11&#39;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">zoom</span><span class="o">:</span><span class="w"> </span><span class="mf">11</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">center</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="o">-</span><span class="mf">62.69133</span><span class="p">,</span><span class="w"> </span><span class="mf">8.32179</span><span class="p">]</span>
+<span class="w">        </span><span class="p">});</span>
+
+<span class="w">        </span><span class="kd">var</span><span class="w"> </span><span class="nx">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;https://deta-domain/deta&#39;</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">map</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;load&#39;</span><span class="p">,</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">var</span><span class="w"> </span><span class="nx">request</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">XMLHttpRequest</span><span class="p">();</span>
+<span class="w">            </span><span class="nb">window</span><span class="p">.</span><span class="nx">setInterval</span><span class="p">(</span><span class="kd">function</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// make a GET request to parse the GeoJSON at the url</span>
+<span class="w">                </span><span class="nx">request</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">url</span><span class="p">,</span><span class="w"> </span><span class="kc">true</span><span class="p">);</span>
+<span class="w">                </span><span class="nx">request</span><span class="p">.</span><span class="nx">onload</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mf">200</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">400</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="c1">// retrieve the JSON from the response</span>
+<span class="w">                        </span><span class="kd">var</span><span class="w"> </span><span class="nx">json</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">response</span><span class="p">);</span>
+<span class="w">                        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">json</span><span class="p">)</span>
+
+<span class="w">                        </span><span class="c1">// update the drone symbol&#39;s location on the map</span>
+<span class="w">                        </span><span class="nx">map</span><span class="p">.</span><span class="nx">getSource</span><span class="p">(</span><span class="s1">&#39;drone&#39;</span><span class="p">).</span><span class="nx">setData</span><span class="p">(</span><span class="nx">json</span><span class="p">);</span>
+
+<span class="w">                        </span><span class="c1">// fly the map to the drone&#39;s current location</span>
+<span class="w">                        </span><span class="nx">map</span><span class="p">.</span><span class="nx">flyTo</span><span class="p">({</span>
+<span class="w">                            </span><span class="nx">center</span><span class="o">:</span><span class="w"> </span><span class="nx">json</span><span class="p">.</span><span class="nx">geometry</span><span class="p">.</span><span class="nx">coordinates</span><span class="p">,</span>
+<span class="w">                            </span><span class="nx">zoom</span><span class="o">:</span><span class="w"> </span><span class="mf">17</span><span class="p">,</span>
+<span class="w">                            </span><span class="nx">speed</span><span class="o">:</span><span class="w"> </span><span class="mf">0.5</span>
+<span class="w">                        </span><span class="p">});</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                </span><span class="p">};</span>
+<span class="w">                </span><span class="nx">request</span><span class="p">.</span><span class="nx">send</span><span class="p">();</span>
+<span class="w">            </span><span class="p">},</span><span class="w"> </span><span class="mf">2000</span><span class="p">);</span>
+
+<span class="w">            </span><span class="nx">map</span><span class="p">.</span><span class="nx">addSource</span><span class="p">(</span><span class="s1">&#39;drone&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;geojson&#39;</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="nx">url</span>
+<span class="w">            </span><span class="p">});</span>
+
+<span class="w">            </span><span class="nx">map</span><span class="p">.</span><span class="nx">addLayer</span><span class="p">({</span>
+<span class="w">                </span><span class="s1">&#39;id&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;drone&#39;</span><span class="p">,</span>
+<span class="w">                </span><span class="s1">&#39;type&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;symbol&#39;</span><span class="p">,</span>
+<span class="w">                </span><span class="s1">&#39;source&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;drone&#39;</span><span class="p">,</span>
+<span class="w">                </span><span class="s1">&#39;layout&#39;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="s1">&#39;icon-image&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;rocket-15&#39;</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">            </span><span class="p">});</span>
+<span class="w">        </span><span class="p">});</span>
+<span class="w">    </span><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</code></pre></div>
+
+<p>In var <code>url = 'https://deta-domain/deta';</code> put your deta micros link</p>
+<p>Now navigate to <code>https://deta-domain/map</code> to see if all works.</p>
+<p>This is my final example <a href="https://2bbwzl.deta.dev/mbox">Realtime Map</a></p>
+<p>This was a two month of research and learning on the way, i'm not close to be a good developer but i've really enjoyed this journey. If you have some question, dropme a tweet.</p>
+<p>For further read, take a look at.</p>
+<ul>
+<li><a href="https://www.mapbox.com/mapbox-gljs">Mapbox GL</a></li>
+<li><a href="https://deta.sh">Deta</a></li>
+<li><a href="https://fastapi.tiangolo.com/">FastAPI</a></li>
+<li><a href="https://geojson.org/">GeoJson</a></li>
+</ul>
+  </article>
+
+  <footer>
+    <div class="taglist">
+      <span class="icon fa-clock-o">&nbsp</span> 2021-02-11
+      
+        <span>|&nbsp</span>
+        
+        <span>&num;<a href="/tag/awesome/">awesome</a></span>
+        
+        <span>&num;<a href="/tag/realtime/">realtime</a></span>
+        
+        <span>&num;<a href="/tag/geoposition/">geoposition</a></span>
+        
+        </span>
+      
+    </div>
+  </footer>
+</section>
+
+
+</main>
+
+<!-- Footer -->
+<footer>
+  <ul class="icons">
+    <li><a href="https://twitter.com/unx_dev" aria-label="Twitter" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
+    <li><a href="https://github.com/cgmark101" aria-label="Github" class="icon fa-github"><span class="label">Github</span></a></li>
+    <li><a href="https://instagram.com/cgmark01" aria-label="Instagram" class="icon fa-instagram"><span class="label">Twitter</span></a></li>
+    <li><a href="mailto:cgmark101@gmail.com" aria-label="Mail" class="icon fa-envelope"><span class="label">Email</span></a></li>
+</footer>
+
+</div><!-- ./#wrapper -->
+
+<!-- Copyright -->
+<div id="copyright">
+  &copy <span id="year"></span> Akane.
+</div>
+
+<!-- JS -->
+<script>document.getElementById("year").innerHTML = new Date().getFullYear();</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+</body>

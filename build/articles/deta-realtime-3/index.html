@@ -1,0 +1,250 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deta + RealTime Tracking - Part 3 - Akane</title>
+<meta name="description" content="Akane blog">
+<!-- CSS -->
+<link rel=stylesheet type=text/css href="/static/css/milligram.css" />
+<link rel="stylesheet" href="/pygments.css">
+<link rel=stylesheet type=text/css href="/static/css/style.css" />
+<link rel="shortcut icon" href="/static/img/favico.svg">
+</head>
+
+<body>
+
+<!-- Wrapper -->
+
+<div id="wrapper">
+
+<!-- Header -->
+<section id="header">
+  <header>
+    <a itemprop="url" href="/">
+      <img itemprop="logo" src="/static/img/akane.logo.svg" alt="Dummy logotype" width="150" height="150"/>
+    </a>
+  </header>
+  <nav id="nav">
+    <input type="checkbox" id="menutoggle">
+    <label for="menutoggle" class="labeltoggle">&#9776; Menu</label>
+    <ul>
+      <li><a href="/">Blog</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+  </nav>
+</section>
+
+<main>
+
+
+<section class="content">
+  <header>
+    <h2>Deta + RealTime Tracking - Part 3</h2>
+    
+    <p>Realtime position Tracking using deta and micros</p>
+    
+    
+  </header>
+
+  <article>
+  <p>Before we continue, i have to say that to the date, havent figured out how to make the mqtt python client work on micros, so we are going to keep it and runnin it inside our pc. This part of the series focus on making the API and upload to <code>detaMicros</code> or you can use it locally too. </p>
+<p>In this post we are going to make a REST API using the aweosome framework called <code>FastAPI</code>, this plays very very good with <code>detaMicros</code>, so let's start.</p>
+<h1>FastAPI</h1>
+<p>As a little intro lest make a quick and very easy  rest api, but first lets creat our development enviroment.</p>
+<div class="codehilite"><pre><span></span><code>mkdir<span class="w"> </span>realtime-api<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>realtime-api
+virtualenv<span class="w"> </span>-p<span class="w"> </span>python3<span class="w"> </span>env
+.<span class="w"> </span>env/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>fastapi<span class="w"> </span>uvicorn<span class="w"> </span>deta
+touch<span class="w"> </span>main.py<span class="w"> </span>
+touch<span class="w"> </span>requirements.txt
+</code></pre></div>
+
+<p>Inside the requirements.txt type</p>
+<div class="codehilite"><pre><span></span><code>fastapi<span class="w"> </span>
+deta
+uvicorn
+</code></pre></div>
+
+<p>Now the fun part, open main.py with your favorite editor.</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span> 
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">hellow_world</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;hola&#39;</span><span class="p">:</span><span class="s1">&#39;mundo&#39;</span><span class="p">}</span>
+</code></pre></div>
+
+<p>Open the terminal and type.</p>
+<div class="codehilite"><pre><span></span><code>uvicorn<span class="w"> </span>main:app<span class="w"> </span>--reload
+</code></pre></div>
+
+<p>Open the browser and navigate to <a href="http://127.0.0.1:8000">127.0.0.1:8000</a>, you should see {'hola':'mundo'} and voila, your brand new api is up and running. Now here comes the best part, all the previus work pays off in this section, all we did is for this moment. We need to make a endpoint where the database is returned in the browser as json or in a variation of json format, more specific <code>GeoJson</code>, to be able to display our location in the maps with the help of mapbox.</p>
+<p><code>GeoJSON</code> is a format for encoding a variety of geographic data structures.</p>
+<p>As a very quick example navigate to <a href="https://wanderdrone.appspot.com/">WanderDrone</a>, thats a <code>GeoJson</code> endpoint, thats what we need to make</p>
+<p>The <code>Geojson</code> structure in its very basic form looks like this.</p>
+<div class="codehilite"><pre><span></span><code><span class="o">{</span>
+<span class="w">  </span><span class="s2">&quot;type&quot;</span>:<span class="w"> </span><span class="s2">&quot;Feature&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;geometry&quot;</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;type&quot;</span>:<span class="w"> </span><span class="s2">&quot;Point&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;coordinates&quot;</span>:<span class="w"> </span><span class="o">[</span><span class="m">125</span>.6,<span class="w"> </span><span class="m">10</span>.1<span class="o">]</span>
+<span class="w">  </span><span class="o">}</span>,
+<span class="w">  </span><span class="s2">&quot;properties&quot;</span>:<span class="w"> </span><span class="o">{}</span>
+<span class="o">}</span>
+</code></pre></div>
+
+<p>Where 125.6 in longitude and 10.1 latitude</p>
+<p>So gues what, owntracks gives those 2 variables and we already have it in our database, what we need to do is return the latitud and longitud only in a <code>GeoJson</code> format to the endpoint. </p>
+<p>Open the main.py and type</p>
+<div class="codehilite"><pre><span></span><code>from<span class="w"> </span>fastapi<span class="w"> </span>import<span class="w"> </span>FastAPI<span class="w"> </span>
+from<span class="w"> </span>deta<span class="w"> </span>import<span class="w"> </span>Deta
+
+<span class="nv">KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;project key&#39;</span>
+<span class="nv">BASE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;realtime&#39;</span><span class="w"> </span><span class="c1"># detaBase name</span>
+
+<span class="nv">deta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>Deta<span class="o">(</span>KEY<span class="o">)</span><span class="w"> </span><span class="c1"># configure your Deta project</span>
+<span class="nv">db</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>deta.Base<span class="o">(</span>BASE<span class="o">)</span><span class="w">  </span><span class="c1"># access your DB</span>
+
+<span class="nv">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>FastAPI<span class="o">()</span>
+
+@app.get<span class="o">(</span><span class="s1">&#39;/&#39;</span><span class="o">)</span>
+async<span class="w"> </span>def<span class="w"> </span>hellow_world<span class="o">()</span>:
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">{</span><span class="s1">&#39;hola&#39;</span>:<span class="s1">&#39;mundo&#39;</span><span class="o">}</span>
+
+<span class="c1"># endpoint</span>
+@app.get<span class="o">(</span><span class="s1">&#39;/deta&#39;</span><span class="o">)</span>
+async<span class="w"> </span>def<span class="w"> </span>deta<span class="o">()</span>:
+<span class="w">    </span><span class="c1"># get database entry, return a list. </span>
+<span class="w">    </span><span class="c1"># in this case return a dictionary inside a list</span>
+<span class="w">    </span><span class="nv">resultado</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>next<span class="o">(</span>db.fetch<span class="o">())</span>
+
+<span class="w">    </span><span class="c1"># iterate for desired data inside the list</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span>item<span class="w"> </span><span class="k">in</span><span class="w"> </span>resultado:
+<span class="w">      </span><span class="nv">lat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>item<span class="o">[</span><span class="s1">&#39;lat&#39;</span><span class="o">]</span><span class="w"> </span><span class="c1"># latitude</span>
+<span class="w">      </span><span class="nv">lon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>item<span class="o">[</span><span class="s1">&#39;lon&#39;</span><span class="o">]</span><span class="w"> </span><span class="c1"># longitude</span>
+
+<span class="w">    </span><span class="c1"># data to be retrieved in the browser  </span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">{</span><span class="s2">&quot;geometry&quot;</span>:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;type&quot;</span>:<span class="w"> </span><span class="s2">&quot;Point&quot;</span>,<span class="w"> </span><span class="s2">&quot;coordinates&quot;</span>:<span class="w"> </span><span class="o">[</span>lon,<span class="w"> </span>lat<span class="o">]}</span>,<span class="w"> </span><span class="s2">&quot;type&quot;</span>:<span class="w"> </span><span class="s2">&quot;Feature&quot;</span>,<span class="w"> </span><span class="s2">&quot;properties&quot;</span>:<span class="w"> </span><span class="o">{}}</span>
+</code></pre></div>
+
+<p>We have created the <code>/deta</code> endpoint, next we fetch the database that is returned as a list, iterate it, get the data we need and set the latitud as lat and longitude as lon, now we return a <code>GeoJson</code> structure with the variables lat and lon in it.</p>
+<p>Run the main.py again, and navigate to <a href="http://127.0.0.1:8000/deta">127.0.0.1:8000/deta</a> and you will see the <code>GeoJson</code> payload in the browser as a json, just like the <a href="https://wanderdrone.appspot.com/">WanderDrone</a></p>
+<p>Whit this set up, we can upload to deta micros. First install the deta CLI</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://get.deta.dev/cli.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+</code></pre></div>
+
+<p>check if deta cli installed sucesfully</p>
+<div class="codehilite"><pre><span></span><code>deta<span class="w"> </span>--help
+</code></pre></div>
+
+<p>If you get error you must add the cli to your path</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PATH</span><span class="s2">:/home/&lt;user&gt;/.deta/bin&quot;</span>
+</code></pre></div>
+
+<p>Check again </p>
+<div class="codehilite"><pre><span></span><code>deta<span class="w"> </span>--help
+
+Usage:
+<span class="w">  </span>deta<span class="w"> </span><span class="o">[</span>flags<span class="o">]</span>
+<span class="w">  </span>deta<span class="w"> </span><span class="o">[</span>command<span class="o">]</span>
+
+Available<span class="w"> </span>Commands:
+<span class="w">  </span>auth<span class="w">        </span>Change<span class="w"> </span>auth<span class="w"> </span>settings<span class="w"> </span><span class="k">for</span><span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>clone<span class="w">       </span>Clone<span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>cron<span class="w">        </span>Change<span class="w"> </span>cron<span class="w"> </span>settings<span class="w"> </span><span class="k">for</span><span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>deploy<span class="w">      </span>Deploy<span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>details<span class="w">     </span>Details<span class="w"> </span>about<span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span><span class="nb">help</span><span class="w">        </span>Help<span class="w"> </span>about<span class="w"> </span>any<span class="w"> </span><span class="nb">command</span>
+<span class="w">  </span>login<span class="w">       </span>Login<span class="w"> </span>to<span class="w"> </span>deta
+<span class="w">  </span>new<span class="w">         </span>Create<span class="w"> </span>a<span class="w"> </span>new<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>projects<span class="w">    </span>List<span class="w"> </span>deta<span class="w"> </span>projects
+<span class="w">  </span>pull<span class="w">        </span>Pull<span class="w"> </span>the<span class="w"> </span>lastest<span class="w"> </span>deployed<span class="w"> </span>code<span class="w"> </span>of<span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>run<span class="w">         </span>Run<span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>update<span class="w">      </span>Update<span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>version<span class="w">     </span>Print<span class="w"> </span>deta<span class="w"> </span>version
+<span class="w">  </span>visor<span class="w">       </span>Change<span class="w"> </span>visor<span class="w"> </span>settings<span class="w"> </span><span class="k">for</span><span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>watch<span class="w">       </span>Deploy<span class="w"> </span>changes<span class="w"> </span><span class="k">in</span><span class="w"> </span>real<span class="w"> </span><span class="nb">time</span>
+
+Flags:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">   </span><span class="nb">help</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>deta
+
+Use<span class="w"> </span><span class="s2">&quot;deta [command] --help&quot;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>more<span class="w"> </span>information<span class="w"> </span>about<span class="w"> </span>a<span class="w"> </span>command.
+</code></pre></div>
+
+<h3>We are set</h3>
+<p>In terminal type</p>
+<div class="codehilite"><pre><span></span><code>deta<span class="w"> </span>--login
+</code></pre></div>
+
+<p>Once logged in type</p>
+<div class="codehilite"><pre><span></span><code>deta<span class="w"> </span>new
+</code></pre></div>
+
+<p>And finaly </p>
+<div class="codehilite"><pre><span></span><code>deta<span class="w"> </span>deploy
+</code></pre></div>
+
+<p>Now go to <a href="https://web.deta.sh">web.deta.sh</a> in the <code>micros</code> tab, search for your new project called mqtt-api, youll see a link for your new api that look like this <a href="https://t1y8vi.deta.dev/">https://t1y8vi.deta.dev/</a> (In this case is a link to my blog)</p>
+<p>Navigate to your <code>/deta</code> endpoint <a href="http://wac5gf.deta.dev/deta">wac5gf.deta.dev/deta</a> &lt;== thats mine by the way (dont spy on me)</p>
+<p><code>Note</code>: I have a digital ocean droplet (the cheapest) hosting my python mqtt client, it is listening 24/7 for payloads in the selected topic and i plan to host my own mosquitto broker to get the privacy factor. In the test broker, everyone can subscribe to your topic and see your location so a word of caution there.</p>
+<p>And this is the final part of the backend story, cheers mate, you have created a aweosome micro service for realtime tracking any device with a gps and mark my words, <code>any gps device</code> not just smartphones ones.
+No matter the data that is sent from the gps to database, we just need latitud and longitude and we just learn how to parse the data/payload.</p>
+<p>From this point we can make any app to consume our api, android, iphone, webapp, you name it.</p>
+<p>Our endpoint is a very basic type point <code>GeoJson</code> estructure but you can get multiples devices at a single endpoint and than consume it whit a map library to display one or more device in a single map in realtime. And since all the maps library support the <code>GeoJson</code> standar, the posibilities are almost endless.</p>
+<p>As a sneak peak for the next chapter whatch this <a href="http://wac5gf.deta.dev/map">wac5gf.deta.dev/map</a>. The browser poll every 3 seconds (the time can be modified) to the <code>/deta</code> endpoint fetching the new location. In this map im showing the wander drone in realtime but we can use our endpoint, but that is for the next part of the seris.</p>
+<p>For further read, take a look at.</p>
+<ul>
+<li><a href="https://www.mapbox.com/mapbox-gljs">Mapbox GL</a></li>
+<li><a href="https://deta.sh">Deta</a></li>
+<li><a href="https://fastapi.tiangolo.com/">FastAPI</a></li>
+<li><a href="https://geojson.org/">GeoJson</a></li>
+</ul>
+  </article>
+
+  <footer>
+    <div class="taglist">
+      <span class="icon fa-clock-o">&nbsp</span> 2021-01-30
+      
+        <span>|&nbsp</span>
+        
+        <span>&num;<a href="/tag/awesome/">awesome</a></span>
+        
+        <span>&num;<a href="/tag/realtime/">realtime</a></span>
+        
+        <span>&num;<a href="/tag/geoposition/">geoposition</a></span>
+        
+        </span>
+      
+    </div>
+  </footer>
+</section>
+
+
+</main>
+
+<!-- Footer -->
+<footer>
+  <ul class="icons">
+    <li><a href="https://twitter.com/unx_dev" aria-label="Twitter" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
+    <li><a href="https://github.com/cgmark101" aria-label="Github" class="icon fa-github"><span class="label">Github</span></a></li>
+    <li><a href="https://instagram.com/cgmark01" aria-label="Instagram" class="icon fa-instagram"><span class="label">Twitter</span></a></li>
+    <li><a href="mailto:cgmark101@gmail.com" aria-label="Mail" class="icon fa-envelope"><span class="label">Email</span></a></li>
+</footer>
+
+</div><!-- ./#wrapper -->
+
+<!-- Copyright -->
+<div id="copyright">
+  &copy <span id="year"></span> Akane.
+</div>
+
+<!-- JS -->
+<script>document.getElementById("year").innerHTML = new Date().getFullYear();</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+</body>

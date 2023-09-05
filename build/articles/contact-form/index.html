@@ -1,0 +1,304 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom Serverless Contact Form - Akane</title>
+<meta name="description" content="Akane blog">
+<!-- CSS -->
+<link rel=stylesheet type=text/css href="/static/css/milligram.css" />
+<link rel="stylesheet" href="/pygments.css">
+<link rel=stylesheet type=text/css href="/static/css/style.css" />
+<link rel="shortcut icon" href="/static/img/favico.svg">
+</head>
+
+<body>
+
+<!-- Wrapper -->
+
+<div id="wrapper">
+
+<!-- Header -->
+<section id="header">
+  <header>
+    <a itemprop="url" href="/">
+      <img itemprop="logo" src="/static/img/akane.logo.svg" alt="Dummy logotype" width="150" height="150"/>
+    </a>
+  </header>
+  <nav id="nav">
+    <input type="checkbox" id="menutoggle">
+    <label for="menutoggle" class="labeltoggle">&#9776; Menu</label>
+    <ul>
+      <li><a href="/">Blog</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+  </nav>
+</section>
+
+<main>
+
+
+<section class="content">
+  <header>
+    <h2>Custom Serverless Contact Form</h2>
+    
+    <p>Easy POST action form using FastAPI and Deta</p>
+    
+    
+  </header>
+
+  <article>
+  <p>In this article i bring to you a very easy way to handle forms in your site or html templates (a.k.a static site) without "complicated" stuff like php or javascript by using FastAPI with micros and storing the form in a database, in this case DetaBase is the chosen one.</p>
+<h2>Setup</h2>
+<p>For our setup, is always recomended a virtualenv. Type in terminal</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>mkdir<span class="w"> </span>post<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>post
+$<span class="w"> </span>virtualenv<span class="w"> </span>env
+$<span class="w"> </span>.<span class="w"> </span>env/bin/activate
+$<span class="w"> </span>mkdir<span class="w"> </span>src<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>src
+$<span class="w"> </span>touch<span class="w"> </span>main.py<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>touch<span class="w"> </span>requirements.txt
+</code></pre></div>
+
+<p>Open <code>requirements.txt</code> in the editor and type</p>
+<div class="codehilite"><pre><span></span><code>fastapi
+uvicorn
+deta
+python-multipart
+</code></pre></div>
+
+<p>In terminal type </p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</code></pre></div>
+
+<h2>FastAPI POST</h2>
+<p>Open main.py in the editor</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">#Importing the libraries</span>
+<span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Form</span><span class="p">,</span> <span class="n">Request</span> 
+<span class="kn">from</span> <span class="nn">deta</span> <span class="kn">import</span> <span class="n">Deta</span>
+
+<span class="c1"># DetaBase setup</span>
+<span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;project-key-generated-by-deta&#39;</span>
+<span class="n">deta</span> <span class="o">=</span> <span class="n">Deta</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="c1"># DetaBase instance</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">deta</span><span class="o">.</span><span class="n">Base</span><span class="p">(</span><span class="s2">&quot;contact&quot;</span><span class="p">)</span> <span class="c1"># Name of the data base</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span> <span class="c1"># FastAPI instance</span>
+
+<span class="c1"># Health check</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">index</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;message&#39;</span><span class="p">:</span><span class="s1">&#39;ok&#39;</span><span class="p">}</span>
+
+<span class="c1"># Post method</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/form&#39;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">email</span><span class="p">(</span>
+    <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span>
+    <span class="n">contactName</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> 
+    <span class="n">contactEmail</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> 
+    <span class="n">contactSubject</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> 
+    <span class="n">contactMessage</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">)):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">insert</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">insert</span><span class="p">({</span>
+                <span class="s1">&#39;nombre&#39;</span><span class="p">:</span><span class="n">contactName</span><span class="p">,</span> 
+                <span class="s1">&#39;email&#39;</span><span class="p">:</span><span class="n">contactEmail</span><span class="p">,</span> 
+                <span class="s1">&#39;sujeto&#39;</span><span class="p">:</span><span class="n">contactSubject</span><span class="p">,</span> 
+                <span class="s1">&#39;mensaje&#39;</span><span class="p">:</span><span class="n">contactMessage</span><span class="p">,</span>
+                <span class="p">})</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;message&#39;</span><span class="p">:</span><span class="s1">&#39;something went wrong&#39;</span><span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;message&#39;</span><span class="p">:</span><span class="s1">&#39;sended&#39;</span><span class="p">}</span>
+</code></pre></div>
+
+<p>So far all good</p>
+<p>Run your app, type in terminal</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>uvicorn<span class="w"> </span>main:app<span class="w"> </span>--reload
+</code></pre></div>
+
+<p>Go to <a href="http://127.0.0.1:8000/docs">127.0.0.1:8000/docs</a> and test the thing we just made in the interactive docs, if everything went good, go to <a href="https://web.deta.sh">web.deta.sh</a> open Bases tab and look for the <code>contact</code> database, there should be the post entries.</p>
+<p><img alt="alt text" src="/static/img/base1.jpg" title="base" /></p>
+<h2>Deploy to DetaMicros</h2>
+<p>In terminal type</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>deta<span class="w"> </span>login<span class="w"> </span><span class="c1"># If not logged in</span>
+$<span class="w"> </span>deta<span class="w"> </span>new
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>Output
+
+Successfully<span class="w"> </span>created<span class="w"> </span>a<span class="w"> </span>new<span class="w"> </span>micro
+<span class="o">{</span>
+<span class="w">        </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;src&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;runtime&quot;</span>:<span class="w"> </span><span class="s2">&quot;python3.7&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;endpoint&quot;</span>:<span class="w"> </span><span class="s2">&quot;https://xxxxxx.deta.dev&quot;</span>,<span class="w"> </span><span class="c1"># yours will be diferent</span>
+<span class="w">        </span><span class="s2">&quot;visor&quot;</span>:<span class="w"> </span><span class="s2">&quot;enabled&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;http_auth&quot;</span>:<span class="w"> </span><span class="s2">&quot;disabled&quot;</span>
+<span class="o">}</span>
+Adding<span class="w"> </span>dependencies...
+</code></pre></div>
+
+<p>Now go to <code>https://xxxxxx.deta.dev/docs</code> and repeat the test</p>
+<h2>Contact form</h2>
+<p>If you use VScode install live server plugin </p>
+<p>Create a <code>index.html</code> file and type the code above, in the <code>action="https://xxxxxx.deta.dev/form"</code> paste your domain generated by Deta</p>
+<div class="codehilite"><pre><span></span><code><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">&quot;utf-8&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;viewport&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;width=device-width, initial-scale=1, shrink-to-fit=no&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>contact form<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">link</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;contact-form.css&quot;</span> <span class="na">rel</span><span class="o">=</span><span class="s">&quot;stylesheet&quot;</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-body&quot;</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;fcf-form&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">h3</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-h3&quot;</span><span class="p">&gt;</span>Contact us<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">form</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;fcf-form-id&quot;</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-form-class&quot;</span> <span class="na">method</span><span class="o">=</span><span class="s">&quot;post&quot;</span> <span class="na">action</span><span class="o">=</span><span class="s">&quot;https://xxxxxx.deta.dev/form&quot;</span><span class="p">&gt;</span>
+
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-form-group&quot;</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">&quot;Name&quot;</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-label&quot;</span><span class="p">&gt;</span>Your name<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-input-group&quot;</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">input</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;contactName&quot;</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text&quot;</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;contactName&quot;</span> <span class="na">placeholder</span><span class="o">=</span><span class="s">&quot;Name&quot;</span> <span class="na">value</span><span class="o">=</span><span class="s">&quot;&quot;</span> <span class="na">minlength</span><span class="o">=</span><span class="s">&quot;2&quot;</span> <span class="na">required</span><span class="o">=</span><span class="s">&quot;&quot;</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-form-control&quot;</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-form-group&quot;</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">&quot;Email&quot;</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-label&quot;</span><span class="p">&gt;</span>Your email address<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-input-group&quot;</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">input</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;contactEmail&quot;</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;email&quot;</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;contactEmail&quot;</span> <span class="na">placeholder</span><span class="o">=</span><span class="s">&quot;Email&quot;</span> <span class="na">value</span><span class="o">=</span><span class="s">&quot;&quot;</span> <span class="na">required</span><span class="o">=</span><span class="s">&quot;&quot;</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-form-control&quot;</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-form-group&quot;</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">&quot;Subject&quot;</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-label&quot;</span><span class="p">&gt;</span>Your subject<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-input-group&quot;</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">input</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;contactSubject&quot;</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text&quot;</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;contactSubject&quot;</span> <span class="na">placeholder</span><span class="o">=</span><span class="s">&quot;Subject&quot;</span> <span class="na">value</span><span class="o">=</span><span class="s">&quot;&quot;</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-form-control&quot;</span> <span class="na">required</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-form-group&quot;</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">&quot;Message&quot;</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-label&quot;</span><span class="p">&gt;</span>Your message<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-input-group&quot;</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">textarea</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;contactMessage&quot;</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;contactMessage&quot;</span> <span class="na">placeholder</span><span class="o">=</span><span class="s">&quot;message&quot;</span> <span class="na">rows</span><span class="o">=</span><span class="s">&quot;10&quot;</span> <span class="na">cols</span><span class="o">=</span><span class="s">&quot;50&quot;</span> <span class="na">required</span><span class="o">=</span><span class="s">&quot;&quot;</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-form-control&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">textarea</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-form-group&quot;</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;submit&quot;</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;fcf-button&quot;</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;fcf-btn fcf-btn-primary fcf-btn-lg fcf-btn-block&quot;</span><span class="p">&gt;</span>Send Message<span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</code></pre></div>
+
+<p>Hit <code>Go live</code> and test the contact form</p>
+<p>Thats a Basic setup, we need to redirect after the post was sent and we can do that by change the code in main.py</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">#Importing the libraries</span>
+<span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Form</span><span class="p">,</span> <span class="n">Request</span> 
+<span class="kn">from</span> <span class="nn">deta</span> <span class="kn">import</span> <span class="n">Deta</span>
+
+<span class="kn">from</span> <span class="nn">fastapi.responses</span> <span class="kn">import</span> <span class="n">RedirectResponse</span>
+<span class="kn">import</span> <span class="nn">starlette.status</span> <span class="k">as</span> <span class="nn">status</span>
+
+<span class="c1"># DetaBase setup</span>
+<span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;project-key-generated-by-deta&#39;</span>
+<span class="n">deta</span> <span class="o">=</span> <span class="n">Deta</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="c1"># DetaBase instance</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">deta</span><span class="o">.</span><span class="n">Base</span><span class="p">(</span><span class="s2">&quot;contact&quot;</span><span class="p">)</span> <span class="c1"># Name of the data base</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span> <span class="c1"># FastAPI instance</span>
+
+<span class="c1"># Health check</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">index</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;message&#39;</span><span class="p">:</span><span class="s1">&#39;ok&#39;</span><span class="p">}</span>
+
+<span class="c1"># Post method</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/form&#39;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">email</span><span class="p">(</span>
+    <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span>
+    <span class="n">contactName</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> 
+    <span class="n">contactEmail</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> 
+    <span class="n">contactSubject</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> 
+    <span class="n">contactMessage</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">)):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">insert</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">insert</span><span class="p">({</span>
+                <span class="s1">&#39;nombre&#39;</span><span class="p">:</span><span class="n">contactName</span><span class="p">,</span> 
+                <span class="s1">&#39;email&#39;</span><span class="p">:</span><span class="n">contactEmail</span><span class="p">,</span> 
+                <span class="s1">&#39;sujeto&#39;</span><span class="p">:</span><span class="n">contactSubject</span><span class="p">,</span> 
+                <span class="s1">&#39;mensaje&#39;</span><span class="p">:</span><span class="n">contactMessage</span><span class="p">,</span>
+                <span class="p">})</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;message&#39;</span><span class="p">:</span><span class="s1">&#39;something went wrong&#39;</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_302_FOUND</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Change <code>url='/'</code> to redirect wherever you want, may be your own domain.</p>
+<p>BTW go to <a href="https://akane.ga/contact/">Akane contact form</a> and drop me a message, this contact form is handled with this tutorial and redirect to "/"</p>
+<p>For the final words, you can go fansy and implement a email notification system to let you know when someone has used the contact form (<code>Hint</code>: SMTPlib :D)</p>
+<ul>
+<li><a href="https://github.com/cgmark101/serverless-form-email">Source code</a></li>
+</ul>
+<p>For further read, take a look at.</p>
+<ul>
+<li><a href="https://deta.sh">Deta</a></li>
+<li><a href="https://fastapi.tiangolo.com/">FastAPI</a></li>
+</ul>
+  </article>
+
+  <footer>
+    <div class="taglist">
+      <span class="icon fa-clock-o">&nbsp</span> 2021-03-12
+      
+        <span>|&nbsp</span>
+        
+        <span>&num;<a href="/tag/awesome/">awesome</a></span>
+        
+        <span>&num;<a href="/tag/post/">post</a></span>
+        
+        <span>&num;<a href="/tag/fastapi/">fastapi</a></span>
+        
+        <span>&num;<a href="/tag/deta/">deta</a></span>
+        
+        <span>&num;<a href="/tag/form/">form</a></span>
+        
+        <span>&num;<a href="/tag/contact/">contact</a></span>
+        
+        </span>
+      
+    </div>
+  </footer>
+</section>
+
+
+</main>
+
+<!-- Footer -->
+<footer>
+  <ul class="icons">
+    <li><a href="https://twitter.com/unx_dev" aria-label="Twitter" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
+    <li><a href="https://github.com/cgmark101" aria-label="Github" class="icon fa-github"><span class="label">Github</span></a></li>
+    <li><a href="https://instagram.com/cgmark01" aria-label="Instagram" class="icon fa-instagram"><span class="label">Twitter</span></a></li>
+    <li><a href="mailto:cgmark101@gmail.com" aria-label="Mail" class="icon fa-envelope"><span class="label">Email</span></a></li>
+</footer>
+
+</div><!-- ./#wrapper -->
+
+<!-- Copyright -->
+<div id="copyright">
+  &copy <span id="year"></span> Akane.
+</div>
+
+<!-- JS -->
+<script>document.getElementById("year").innerHTML = new Date().getFullYear();</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+</body>

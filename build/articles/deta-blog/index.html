@@ -1,0 +1,197 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deta + Static Blog - Akane</title>
+<meta name="description" content="Akane blog">
+<!-- CSS -->
+<link rel=stylesheet type=text/css href="/static/css/milligram.css" />
+<link rel="stylesheet" href="/pygments.css">
+<link rel=stylesheet type=text/css href="/static/css/style.css" />
+<link rel="shortcut icon" href="/static/img/favico.svg">
+</head>
+
+<body>
+
+<!-- Wrapper -->
+
+<div id="wrapper">
+
+<!-- Header -->
+<section id="header">
+  <header>
+    <a itemprop="url" href="/">
+      <img itemprop="logo" src="/static/img/akane.logo.svg" alt="Dummy logotype" width="150" height="150"/>
+    </a>
+  </header>
+  <nav id="nav">
+    <input type="checkbox" id="menutoggle">
+    <label for="menutoggle" class="labeltoggle">&#9776; Menu</label>
+    <ul>
+      <li><a href="/">Blog</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+  </nav>
+</section>
+
+<main>
+
+
+<section class="content">
+  <header>
+    <h2>Deta + Static Blog</h2>
+    
+    <p>Awesome blog hosted on deta</p>
+    
+    
+  </header>
+
+  <article>
+  <p>In this blog post we are going to learn how to host a pseudo static/dynamic blog. The blog itself is from another developer who has a tutorial on how to make it, but for the sake of speed we are going to clone the repo and adapt it</p>
+<p>This instruction are for linux only, but can be made in any os easily.</p>
+<p>Make a folder wherever you want, open the terminal inside it and type</p>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/insomnux/flaskblog.git
+<span class="nb">cd</span><span class="w"> </span>flaskblog
+mv<span class="w"> </span>app.py<span class="w"> </span>main.py
+</code></pre></div>
+
+<p>If you want to follow the complete tutorial instead, go to
+<a href="https://nicolas.perriault.net/code/2012/dead-easy-yet-powerful-static-website-generator-with-flask/" title="Author blog">flaskblog author post</a></p>
+<h2>Now let's install Deta cli</h2>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://get.deta.dev/cli.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+</code></pre></div>
+
+<p>check if deta cli installed sucesfully</p>
+<div class="codehilite"><pre><span></span><code>deta<span class="w"> </span>--help
+</code></pre></div>
+
+<p>If you get error you must add the cli to your path</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PATH</span><span class="s2">:/home/&lt;user&gt;/.deta/bin&quot;</span>
+</code></pre></div>
+
+<p>Check again </p>
+<div class="codehilite"><pre><span></span><code>deta<span class="w"> </span>--help
+
+Usage:
+<span class="w">  </span>deta<span class="w"> </span><span class="o">[</span>flags<span class="o">]</span>
+<span class="w">  </span>deta<span class="w"> </span><span class="o">[</span>command<span class="o">]</span>
+
+Available<span class="w"> </span>Commands:
+<span class="w">  </span>auth<span class="w">        </span>Change<span class="w"> </span>auth<span class="w"> </span>settings<span class="w"> </span><span class="k">for</span><span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>clone<span class="w">       </span>Clone<span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>cron<span class="w">        </span>Change<span class="w"> </span>cron<span class="w"> </span>settings<span class="w"> </span><span class="k">for</span><span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>deploy<span class="w">      </span>Deploy<span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>details<span class="w">     </span>Details<span class="w"> </span>about<span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span><span class="nb">help</span><span class="w">        </span>Help<span class="w"> </span>about<span class="w"> </span>any<span class="w"> </span><span class="nb">command</span>
+<span class="w">  </span>login<span class="w">       </span>Login<span class="w"> </span>to<span class="w"> </span>deta
+<span class="w">  </span>new<span class="w">         </span>Create<span class="w"> </span>a<span class="w"> </span>new<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>projects<span class="w">    </span>List<span class="w"> </span>deta<span class="w"> </span>projects
+<span class="w">  </span>pull<span class="w">        </span>Pull<span class="w"> </span>the<span class="w"> </span>lastest<span class="w"> </span>deployed<span class="w"> </span>code<span class="w"> </span>of<span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>run<span class="w">         </span>Run<span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>update<span class="w">      </span>Update<span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>version<span class="w">     </span>Print<span class="w"> </span>deta<span class="w"> </span>version
+<span class="w">  </span>visor<span class="w">       </span>Change<span class="w"> </span>visor<span class="w"> </span>settings<span class="w"> </span><span class="k">for</span><span class="w"> </span>a<span class="w"> </span>deta<span class="w"> </span>micro
+<span class="w">  </span>watch<span class="w">       </span>Deploy<span class="w"> </span>changes<span class="w"> </span><span class="k">in</span><span class="w"> </span>real<span class="w"> </span><span class="nb">time</span>
+
+Flags:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">   </span><span class="nb">help</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>deta
+
+Use<span class="w"> </span><span class="s2">&quot;deta [command] --help&quot;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>more<span class="w"> </span>information<span class="w"> </span>about<span class="w"> </span>a<span class="w"> </span>command.
+</code></pre></div>
+
+<h3>We are set</h3>
+<p>In terminal type</p>
+<div class="codehilite"><pre><span></span><code>deta<span class="w"> </span>--login
+</code></pre></div>
+
+<p>Once logged in type</p>
+<div class="codehilite"><pre><span></span><code>deta<span class="w"> </span>new
+</code></pre></div>
+
+<p>And finaly </p>
+<div class="codehilite"><pre><span></span><code>deta<span class="w"> </span>deploy
+</code></pre></div>
+
+<p><code>Pro tip</code> Make sure you type those commands inside the project folder</p>
+<p>Now go to <a href="https://web.deta.sh" title="deta">web.deta.sh</a>, in micros tab, and look for the project, there is a link for your brand new blog</p>
+<h3>Local develop</h3>
+<p>For ease on the customization, you should make changes locally</p>
+<p>Lets create a virtual environment, activated and install dependencies</p>
+<div class="codehilite"><pre><span></span><code>virtualenv<span class="w"> </span>env
+.<span class="w"> </span>env/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirments.txt
+</code></pre></div>
+
+<p>Finally run the server locally</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>main.py
+</code></pre></div>
+
+<p><code>Pro tip</code> Do not make the virtualenv inside de root folder of your project, thats because the virtualenv will be uploaded to the micros.</p>
+<p>So here is a example of how i do it</p>
+<div class="codehilite"><pre><span></span><code>mkdir<span class="w"> </span>dev<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>dev
+virtualenv<span class="w"> </span>env
+.<span class="w"> </span>env/bin/activate
+git<span class="w"> </span>clone<span class="w"> </span>clone<span class="w"> </span>https://github.com/insomnux/flaskblog.git
+<span class="nb">cd</span><span class="w"> </span>flaskblog
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirments.txt
+mv<span class="w"> </span>app.py<span class="w"> </span>main.py
+deta<span class="w"> </span>new
+deta<span class="w"> </span>deploy
+python<span class="w"> </span>main.py
+</code></pre></div>
+
+<h4>Cheers</h4>
+<p>Refer to <a href="https://docs.deta.sh/docs/home" title="Deta docs">deta docs</a> for more information</p>
+<p><code>BTW</code> this blog is made with de flaskblog and deta micros</p>
+<ul>
+<li><a href="https://github.com/cgmark101/blog" title="akane">This Blog Source Code :D</a></li>
+</ul>
+  </article>
+
+  <footer>
+    <div class="taglist">
+      <span class="icon fa-clock-o">&nbsp</span> 2021-01-27
+      
+        <span>|&nbsp</span>
+        
+        <span>&num;<a href="/tag/general/">general</a></span>
+        
+        <span>&num;<a href="/tag/awesome/">awesome</a></span>
+        
+        <span>&num;<a href="/tag/blog/">blog</a></span>
+        
+        </span>
+      
+    </div>
+  </footer>
+</section>
+
+
+</main>
+
+<!-- Footer -->
+<footer>
+  <ul class="icons">
+    <li><a href="https://twitter.com/unx_dev" aria-label="Twitter" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
+    <li><a href="https://github.com/cgmark101" aria-label="Github" class="icon fa-github"><span class="label">Github</span></a></li>
+    <li><a href="https://instagram.com/cgmark01" aria-label="Instagram" class="icon fa-instagram"><span class="label">Twitter</span></a></li>
+    <li><a href="mailto:cgmark101@gmail.com" aria-label="Mail" class="icon fa-envelope"><span class="label">Email</span></a></li>
+</footer>
+
+</div><!-- ./#wrapper -->
+
+<!-- Copyright -->
+<div id="copyright">
+  &copy <span id="year"></span> Akane.
+</div>
+
+<!-- JS -->
+<script>document.getElementById("year").innerHTML = new Date().getFullYear();</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+</body>
